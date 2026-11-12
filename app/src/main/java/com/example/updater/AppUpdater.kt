@@ -55,7 +55,7 @@ class AppUpdater(
     }
 
     companion object {
-        const val DEFAULT_REPO_OWNER = "icarojose81"
+        const val DEFAULT_REPO_OWNER = "icaro81"
         const val DEFAULT_REPO_NAME = "Launcher-tv-beta"
         private const val PREFS_NAME = "silvo_horizon_launcher_prefs"
         private const val KEY_REPO_OWNER = "updater_repo_owner"

@@ -42,7 +42,7 @@
         android:textColor="@color/silvo_text_tertiary"
         android:textSize="12sp"
         android:layout_marginBottom="20dp"
-        tools:text="GitHub: icarojose81/silvo-horizon-tv" />
+        tools:text="GitHub: icaro81/Launcher-tv-beta" />
 
     <LinearLayout
         android:layout_width="match_parent"

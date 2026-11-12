@@ -22,7 +22,7 @@
     <string name="updater_downloading">Descargando actualización (%1$d%%)…</string>
     <string name="updater_installing">Preparando instalación…</string>
     <string name="updater_error">Error al comprobar actualización</string>
-    <string name="updater_github_repo">repos/icarojose81/Launcher-tv-beta/releases/latest</string>
+    <string name="updater_github_repo">repos/icaro81/Launcher-tv-beta/releases/latest</string>
     <string name="default_launcher_title">Launcher Predeterminado (Botón Home)</string>
     <string name="default_launcher_status_active">Estado: Silvo Horizon es tu pantalla de inicio predeterminada.</string>
     <string name="default_launcher_status_inactive">Estado: No predeterminado (Actual: %1$s).</string>

@@ -50,7 +50,7 @@ class ExampleRobolectricTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val updater = AppUpdater(context)
         assertEquals(AppUpdater.UpdateState.Idle, updater.updateState.value)
-        assertEquals("icarojose81/Launcher-tv-beta", updater.getRepositorySlug())
+        assertEquals("icaro81/Launcher-tv-beta", updater.getRepositorySlug())
         assertTrue(updater.isNewerVersion("v1.0.5", "1.0"))
         assertTrue(updater.isNewerVersion("v1.1.0", "1.0.5"))
         assertTrue(!updater.isNewerVersion("v1.0.5", "1.0.5"))
