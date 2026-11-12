@@ -2,9 +2,11 @@ package com.example
 
 import android.app.Dialog
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.text.Editable
@@ -21,11 +23,13 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.fragment.app.FragmentActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.fragment.app.FragmentActivity
 import androidx.leanback.widget.HorizontalGridView
 import androidx.leanback.widget.VerticalGridView
 import androidx.lifecycle.Lifecycle
@@ -34,8 +38,10 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.example.data.model.AppItem
 import com.example.ui.adapter.AllAppsGridAdapter
 import com.example.ui.adapter.CarouselAppAdapter
+import com.example.ui.view.SilvoHorizonBackgroundView
 import com.example.ui.viewmodel.LauncherViewModel
 import com.example.updater.AppUpdater
+import com.example.util.DefaultLauncherHelper
 import kotlinx.coroutines.launch
 
 /**
@@ -47,6 +53,7 @@ class MainActivity : FragmentActivity() {
     private val viewModel: LauncherViewModel by viewModels()
 
     // Views
+    private lateinit var dynamicBackgroundView: SilvoHorizonBackgroundView
     private lateinit var favoritesGridView: HorizontalGridView
     private lateinit var focusedAppNameTextView: TextView
     private lateinit var appDrawerContainer: View
@@ -55,6 +62,7 @@ class MainActivity : FragmentActivity() {
     private lateinit var btnCloseDrawer: ImageButton
 
     // Top Bar Buttons
+    private lateinit var btnHomeDefault: ImageButton
     private lateinit var btnWifi: ImageButton
     private lateinit var btnBluetooth: ImageButton
     private lateinit var btnUpdate: ImageButton
@@ -64,9 +72,25 @@ class MainActivity : FragmentActivity() {
     private lateinit var carouselAdapter: CarouselAppAdapter
     private lateinit var gridAdapter: AllAppsGridAdapter
 
-    // Dialog reference
+    // Dialog references
     private var activeOptionsDialog: Dialog? = null
     private var activeUpdaterDialog: Dialog? = null
+    private var activeLauncherDialog: Dialog? = null
+
+    private var lastTitle: String? = null
+
+    private val defaultLauncherResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            updateHomeDefaultIndicator()
+            refreshDefaultLauncherDialogIfOpen()
+            if (DefaultLauncherHelper.isDefaultLauncher(this)) {
+                Toast.makeText(
+                    this,
+                    "Silvo Horizon establecido como Launcher predeterminado",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,11 +103,29 @@ class MainActivity : FragmentActivity() {
         setupTopBar()
         setupBackNavigation()
         observeViewModel()
+        updateHomeDefaultIndicator()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.hasCategory(Intent.CATEGORY_HOME)) {
+            activeOptionsDialog?.dismiss()
+            activeUpdaterDialog?.dismiss()
+            activeLauncherDialog?.dismiss()
+            if (viewModel.isDrawerOpen.value) {
+                viewModel.closeDrawer()
+            }
+            favoritesGridView.post {
+                favoritesGridView.requestFocus()
+            }
+        }
     }
 
     override fun onResume() {
         super.onResume()
         hideSystemUI()
+        updateHomeDefaultIndicator()
         viewModel.loadData(forceRefresh = true)
     }
 
@@ -97,6 +139,7 @@ class MainActivity : FragmentActivity() {
     }
 
     private fun initViews() {
+        dynamicBackgroundView = findViewById(R.id.dynamicBackgroundView)
         favoritesGridView = findViewById(R.id.favoritesGridView)
         focusedAppNameTextView = findViewById(R.id.focusedAppNameTextView)
         appDrawerContainer = findViewById(R.id.appDrawerContainer)
@@ -104,6 +147,7 @@ class MainActivity : FragmentActivity() {
         searchEditText = findViewById(R.id.searchEditText)
         btnCloseDrawer = findViewById(R.id.btnCloseDrawer)
 
+        btnHomeDefault = findViewById(R.id.btnHomeDefault)
         btnWifi = findViewById(R.id.btnWifi)
         btnBluetooth = findViewById(R.id.btnBluetooth)
         btnUpdate = findViewById(R.id.btnUpdate)
@@ -112,8 +156,12 @@ class MainActivity : FragmentActivity() {
 
     private fun setupCarousel() {
         carouselAdapter = CarouselAppAdapter(
-            onItemClick = { app ->
-                handleAppClick(app)
+            onItemClick = { app, virtualPosition ->
+                if (favoritesGridView.selectedPosition != virtualPosition) {
+                    favoritesGridView.setSelectedPositionSmooth(virtualPosition)
+                } else {
+                    handleAppClick(app)
+                }
             },
             onItemLongClick = { app ->
                 if (!app.isDrawerShortcut) {
@@ -123,19 +171,39 @@ class MainActivity : FragmentActivity() {
                     false
                 }
             },
-            onItemFocused = { app, _ ->
-                updateFocusedAppTitle(app.label)
-                viewModel.setFocusedApp(app)
+            onItemFocused = { app, virtualPosition, _ ->
+                onCarouselItemCentered(app, virtualPosition)
             }
         )
 
         favoritesGridView.apply {
             adapter = carouselAdapter
+            // WINDOW_ALIGN_NO_EDGE + 50f keeps the focused item strictly at the center of the screen
             setFocusScrollStrategy(HorizontalGridView.FOCUS_SCROLL_ALIGNED)
-            windowAlignment = HorizontalGridView.WINDOW_ALIGN_BOTH_EDGE
+            windowAlignment = HorizontalGridView.WINDOW_ALIGN_NO_EDGE
             windowAlignmentOffsetPercent = 50f
             itemAlignmentOffsetPercent = 50f
             setItemMargin(16)
+        }
+    }
+
+    private fun onCarouselItemCentered(app: AppItem, virtualPosition: Int) {
+        updateFocusedAppTitle(app.label)
+        viewModel.setFocusedApp(app)
+
+        val accentColor = SilvoHorizonBackgroundView.extractAccentColor(
+            key = app.uniqueId,
+            drawable = app.icon,
+            isDrawerShortcut = app.isDrawerShortcut
+        )
+        dynamicBackgroundView.animateToAccentColor(accentColor)
+
+        // Silently re-center if user ever scrolls near the edges of the 100,000 virtual span
+        if (virtualPosition < 200 || virtualPosition > CarouselAppAdapter.VIRTUAL_LOOP_COUNT - 200) {
+            val recentered = carouselAdapter.getCenterStartPosition(app.uniqueId)
+            favoritesGridView.post {
+                favoritesGridView.setSelectedPosition(recentered)
+            }
         }
     }
 
@@ -170,6 +238,10 @@ class MainActivity : FragmentActivity() {
     }
 
     private fun setupTopBar() {
+        btnHomeDefault.setOnClickListener {
+            showDefaultLauncherDialog()
+        }
+
         btnWifi.setOnClickListener {
             launchSafeIntent(Intent(Settings.ACTION_WIFI_SETTINGS))
         }
@@ -188,6 +260,16 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    private fun updateHomeDefaultIndicator() {
+        val isDefault = DefaultLauncherHelper.isDefaultLauncher(this)
+        val tintColor = if (isDefault) {
+            ContextCompat.getColor(this, R.color.silvo_cyan_neon)
+        } else {
+            ContextCompat.getColor(this, R.color.silvo_text_secondary)
+        }
+        btnHomeDefault.imageTintList = ColorStateList.valueOf(tintColor)
+    }
+
     private fun setupBackNavigation() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -204,10 +286,19 @@ class MainActivity : FragmentActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
                     viewModel.favorites.collect { list ->
-                        carouselAdapter.submitList(list)
-                        if (favoritesGridView.childCount == 0 && list.isNotEmpty()) {
-                            favoritesGridView.post {
-                                favoritesGridView.requestFocus()
+                        val structureChanged = carouselAdapter.submitItems(list)
+                        if (structureChanged && list.isNotEmpty()) {
+                            val targetId = viewModel.focusedApp.value?.uniqueId
+                            val centerPos = carouselAdapter.getCenterStartPosition(targetId)
+                            favoritesGridView.setSelectedPosition(centerPos)
+
+                            val centeredItem = carouselAdapter.getRealItem(centerPos) ?: list.first()
+                            onCarouselItemCentered(centeredItem, centerPos)
+
+                            if (!viewModel.isDrawerOpen.value) {
+                                favoritesGridView.post {
+                                    favoritesGridView.requestFocus()
+                                }
                             }
                         }
                     }
@@ -254,14 +345,18 @@ class MainActivity : FragmentActivity() {
     }
 
     private fun updateFocusedAppTitle(title: String) {
+        if (title == lastTitle && focusedAppNameTextView.text.toString() == title) return
+        lastTitle = title
+
+        focusedAppNameTextView.animate().cancel()
         focusedAppNameTextView.animate()
             .alpha(0f)
-            .setDuration(80)
+            .setDuration(75)
             .withEndAction {
                 focusedAppNameTextView.text = title
                 focusedAppNameTextView.animate()
                     .alpha(1f)
-                    .setDuration(120)
+                    .setDuration(130)
                     .start()
             }
             .start()
@@ -276,6 +371,91 @@ class MainActivity : FragmentActivity() {
                 Toast.makeText(this, "No se pudo iniciar ${app.label}", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    private fun showDefaultLauncherDialog() {
+        activeLauncherDialog?.dismiss()
+
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_default_launcher)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+        activeLauncherDialog = dialog
+        refreshDefaultLauncherDialogContent(dialog)
+
+        val btnSetDefault: Button = dialog.findViewById(R.id.btnSetDefaultLauncher)
+        val btnOpenHomeSettings: Button = dialog.findViewById(R.id.btnOpenHomeSettings)
+        val btnClose: Button = dialog.findViewById(R.id.btnCloseLauncherDialog)
+
+        btnSetDefault.setOnClickListener {
+            val intent = DefaultLauncherHelper.buildSetDefaultLauncherIntent(this)
+            if (intent != null) {
+                try {
+                    defaultLauncherResult.launch(intent)
+                } catch (_: Exception) {
+                    openHomeSettingsFallback()
+                }
+            } else {
+                openHomeSettingsFallback()
+            }
+        }
+
+        btnOpenHomeSettings.setOnClickListener {
+            openHomeSettingsFallback()
+        }
+
+        btnClose.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
+        btnSetDefault.requestFocus()
+    }
+
+    private fun refreshDefaultLauncherDialogIfOpen() {
+        val dialog = activeLauncherDialog ?: return
+        if (dialog.isShowing) {
+            refreshDefaultLauncherDialogContent(dialog)
+        }
+    }
+
+    private fun refreshDefaultLauncherDialogContent(dialog: Dialog) {
+        val statusView: TextView = dialog.findViewById(R.id.launcherDialogStatus)
+        val isDefault = DefaultLauncherHelper.isDefaultLauncher(this)
+        statusView.text = if (isDefault) {
+            getString(R.string.default_launcher_status_active)
+        } else {
+            val currentLabel = DefaultLauncherHelper.getCurrentDefaultLauncherLabel(this)
+            getString(R.string.default_launcher_status_inactive, currentLabel)
+        }
+        statusView.setTextColor(
+            ContextCompat.getColor(
+                this,
+                if (isDefault) R.color.silvo_accent_green else R.color.silvo_text_primary
+            )
+        )
+    }
+
+    private fun openHomeSettingsFallback() {
+        val candidates = mutableListOf(
+            Intent(Settings.ACTION_HOME_SETTINGS)
+        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            candidates.add(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS))
+        }
+        candidates.add(Intent(Settings.ACTION_SETTINGS))
+
+        for (intent in candidates) {
+            try {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(intent)
+                return
+            } catch (_: Exception) {
+                // Try next settings screen
+            }
+        }
+        Toast.makeText(this, "Abre Ajustes > Aplicaciones > Apps predeterminadas", Toast.LENGTH_LONG).show()
     }
 
     private fun showAppOptionsDialog(app: AppItem) {
@@ -329,7 +509,7 @@ class MainActivity : FragmentActivity() {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 startActivity(intent)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 Toast.makeText(this, "Error al abrir información", Toast.LENGTH_SHORT).show()
             }
         }
@@ -342,7 +522,7 @@ class MainActivity : FragmentActivity() {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 startActivity(intent)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 Toast.makeText(this, "Error al solicitar desinstalación", Toast.LENGTH_SHORT).show()
             }
         }
@@ -446,7 +626,7 @@ class MainActivity : FragmentActivity() {
         try {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             Toast.makeText(this, "Opción no disponible en este dispositivo", Toast.LENGTH_SHORT).show()
         }
     }
@@ -455,5 +635,6 @@ class MainActivity : FragmentActivity() {
         super.onDestroy()
         activeOptionsDialog?.dismiss()
         activeUpdaterDialog?.dismiss()
+        activeLauncherDialog?.dismiss()
     }
 }

@@ -1,9 +1,16 @@
 package com.example
 
 import android.content.Context
+import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import androidx.test.core.app.ApplicationProvider
+import com.example.data.model.AppItem
 import com.example.data.repository.AppRepository
+import com.example.ui.adapter.CarouselAppAdapter
+import com.example.ui.view.SilvoHorizonBackgroundView
 import com.example.updater.AppUpdater
+import com.example.util.DefaultLauncherHelper
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -43,5 +50,62 @@ class ExampleRobolectricTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val updater = AppUpdater(context)
         assertEquals(AppUpdater.UpdateState.Idle, updater.updateState.value)
+    }
+
+    @Test
+    fun `carousel adapter wraps infinitely around center position`() {
+        val adapter = CarouselAppAdapter(
+            onItemClick = { _, _ -> },
+            onItemLongClick = { false },
+            onItemFocused = { _, _, _ -> }
+        )
+
+        val items = listOf(
+            AppItem("com.a", "A", "App A", null),
+            AppItem("com.b", "B", "App B", null),
+            AppItem("com.c", "C", "App C", null)
+        )
+        adapter.submitItems(items)
+
+        assertEquals(CarouselAppAdapter.VIRTUAL_LOOP_COUNT, adapter.itemCount)
+
+        val centerStart = adapter.getCenterStartPosition()
+        assertEquals("App A", adapter.getRealItem(centerStart)?.label)
+        assertEquals("App B", adapter.getRealItem(centerStart + 1)?.label)
+        assertEquals("App C", adapter.getRealItem(centerStart - 1)?.label)
+        assertEquals("App C", adapter.getRealItem(centerStart + 2)?.label)
+        assertEquals("App A", adapter.getRealItem(centerStart + 3)?.label)
+    }
+
+    @Test
+    fun `background color extractor derives accent color from drawable`() {
+        val redColor = SilvoHorizonBackgroundView.extractAccentColor(
+            key = "test_red_app",
+            drawable = ColorDrawable(Color.RED),
+            isDrawerShortcut = false
+        )
+        assertEquals(Color.RED, redColor)
+
+        val shortcutColor = SilvoHorizonBackgroundView.extractAccentColor(
+            key = "test_shortcut",
+            drawable = null,
+            isDrawerShortcut = true
+        )
+        assertEquals(Color.parseColor("#00E5FF"), shortcutColor)
+    }
+
+    @Test
+    fun `manifest resolves MainActivity for HOME intent`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val homeIntent = Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_HOME)
+            setPackage(context.packageName)
+        }
+        val resolved = context.packageManager.queryIntentActivities(homeIntent, 0)
+        assertTrue(
+            "MainActivity should handle CATEGORY_HOME",
+            resolved.any { it.activityInfo.name.endsWith("MainActivity") }
+        )
+        assertNotNull(DefaultLauncherHelper.buildSetDefaultLauncherIntent(context))
     }
 }

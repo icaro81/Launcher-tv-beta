@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="480dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_silvo_dialog"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/launcherDialogTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/default_launcher_title"
+        android:textColor="@color/silvo_cyan_neon"
+        android:textSize="20sp"
+        android:fontFamily="sans-serif-medium"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/launcherDialogStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/silvo_text_primary"
+        android:textSize="14sp"
+        android:layout_marginBottom="10dp"
+        tools:text="Launcher actual: Google TV" />
+
+    <TextView
+        android:id="@+id/launcherDialogHint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/default_launcher_hint"
+        android:textColor="@color/silvo_text_secondary"
+        android:textSize="13sp"
+        android:lineSpacingExtra="3dp"
+        android:layout_marginBottom="20dp" />
+
+    <Button
+        android:id="@+id/btnSetDefaultLauncher"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="@string/action_set_default_launcher"
+        android:textColor="@color/silvo_cyan_neon"
+        android:background="@drawable/selector_app_card"
+        android:layout_marginBottom="8dp"
+        android:textAllCaps="false"
+        android:textSize="15sp"
+        android:focusable="true" />
+
+    <Button
+        android:id="@+id/btnOpenHomeSettings"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="@string/action_open_home_settings"
+        android:textColor="@color/silvo_text_primary"
+        android:background="@drawable/selector_app_card"
+        android:layout_marginBottom="8dp"
+        android:textAllCaps="false"
+        android:textSize="15sp"
+        android:focusable="true" />
+
+    <Button
+        android:id="@+id/btnCloseLauncherDialog"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="@string/action_close"
+        android:textColor="@color/silvo_text_secondary"
+        android:background="@drawable/selector_app_card"
+        android:textAllCaps="false"
+        android:textSize="15sp"
+        android:focusable="true" />
+
+</LinearLayout>

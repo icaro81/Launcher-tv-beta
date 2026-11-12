@@ -9,6 +9,7 @@
     <string name="action_uninstall">Desinstalar</string>
     <string name="action_settings">Ajustes del Sistema</string>
     <string name="action_check_updates">Buscar Actualizaciones</string>
+    <string name="action_close">Cerrar</string>
     <string name="status_connected">Conectado</string>
     <string name="status_disconnected">Sin conexión</string>
     <string name="drawer_shortcut_label">Todas las Apps</string>
@@ -22,4 +23,10 @@
     <string name="updater_installing">Preparando instalación…</string>
     <string name="updater_error">Error al comprobar actualización</string>
     <string name="updater_github_repo">repos/icarojose81/silvo-horizon-tv/releases/latest</string>
+    <string name="default_launcher_title">Launcher Predeterminado (Botón Home)</string>
+    <string name="default_launcher_status_active">Estado: Silvo Horizon es tu pantalla de inicio predeterminada.</string>
+    <string name="default_launcher_status_inactive">Estado: No predeterminado (Actual: %1$s).</string>
+    <string name="default_launcher_hint">Para que el botón Home del control remoto (ej. Xiaomi Mi Box S) permanezca en Silvo Horizon, establécelo como app de Inicio predeterminada. Si el sistema no muestra el selector, abre Ajustes de Inicio o borra los valores predeterminados del launcher original.</string>
+    <string name="action_set_default_launcher">Establecer como Inicio por defecto</string>
+    <string name="action_open_home_settings">Abrir Ajustes de Inicio / Apps por defecto</string>
 </resources>
