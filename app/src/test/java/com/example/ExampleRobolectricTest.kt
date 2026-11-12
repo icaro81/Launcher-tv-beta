@@ -46,10 +46,14 @@ class ExampleRobolectricTest {
     }
 
     @Test
-    fun `updater starts in Idle state`() {
+    fun `updater starts in Idle state with correct repository and version logic`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val updater = AppUpdater(context)
         assertEquals(AppUpdater.UpdateState.Idle, updater.updateState.value)
+        assertEquals("icarojose81/Launcher-tv-beta", updater.getRepositorySlug())
+        assertTrue(updater.isNewerVersion("v1.0.5", "1.0"))
+        assertTrue(updater.isNewerVersion("v1.1.0", "1.0.5"))
+        assertTrue(!updater.isNewerVersion("v1.0.5", "1.0.5"))
     }
 
     @Test

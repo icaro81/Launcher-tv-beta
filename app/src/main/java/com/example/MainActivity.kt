@@ -337,11 +337,21 @@ class MainActivity : FragmentActivity() {
 
                 launch {
                     viewModel.updateState.collect { state ->
+                        updateUpdateButtonIndicator(state)
                         updateUpdaterDialogState(state)
                     }
                 }
             }
         }
+    }
+
+    private fun updateUpdateButtonIndicator(state: AppUpdater.UpdateState) {
+        val tintColor = when (state) {
+            is AppUpdater.UpdateState.UpdateAvailable,
+            is AppUpdater.UpdateState.DownloadComplete -> ContextCompat.getColor(this, R.color.silvo_cyan_neon)
+            else -> ContextCompat.getColor(this, R.color.silvo_text_secondary)
+        }
+        btnUpdate.imageTintList = ColorStateList.valueOf(tintColor)
     }
 
     private fun updateFocusedAppTitle(title: String) {
@@ -541,7 +551,8 @@ class MainActivity : FragmentActivity() {
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
         val updaterRepoInfo: TextView = dialog.findViewById(R.id.updaterRepoInfo)
-        updaterRepoInfo.text = "Repositorio: icarojose81/silvo-horizon-tv • v${BuildConfig.VERSION_NAME}"
+        updaterRepoInfo.text =
+            "Repositorio: ${viewModel.updater.getRepositorySlug()} • v${BuildConfig.VERSION_NAME}"
 
         val btnCancel: Button = dialog.findViewById(R.id.btnCancelUpdater)
         btnCancel.setOnClickListener {
@@ -550,6 +561,7 @@ class MainActivity : FragmentActivity() {
 
         activeUpdaterDialog = dialog
         dialog.show()
+        updateUpdaterDialogState(viewModel.updateState.value)
     }
 
     private fun updateUpdaterDialogState(state: AppUpdater.UpdateState) {
@@ -568,11 +580,12 @@ class MainActivity : FragmentActivity() {
                 actionButton.visibility = View.GONE
             }
             is AppUpdater.UpdateState.UpToDate -> {
-                statusText.text = getString(R.string.updater_up_to_date)
+                statusText.text = "${getString(R.string.updater_up_to_date)} (v${BuildConfig.VERSION_NAME})"
                 progressBar.visibility = View.GONE
                 actionButton.visibility = View.VISIBLE
                 actionButton.text = "Aceptar"
                 actionButton.setOnClickListener { dialog.dismiss() }
+                actionButton.requestFocus()
             }
             is AppUpdater.UpdateState.UpdateAvailable -> {
                 statusText.text = getString(R.string.updater_update_found, state.latestVersion)
@@ -582,11 +595,18 @@ class MainActivity : FragmentActivity() {
                 actionButton.setOnClickListener {
                     viewModel.updater.startDownload(state.downloadUrl, state.latestVersion)
                 }
+                actionButton.requestFocus()
             }
             is AppUpdater.UpdateState.Downloading -> {
                 statusText.text = getString(R.string.updater_downloading, state.progressPercent)
                 progressBar.visibility = View.VISIBLE
-                progressBar.isIndeterminate = true
+                if (state.progressPercent > 0) {
+                    progressBar.isIndeterminate = false
+                    progressBar.max = 100
+                    progressBar.progress = state.progressPercent
+                } else {
+                    progressBar.isIndeterminate = true
+                }
                 actionButton.visibility = View.GONE
             }
             is AppUpdater.UpdateState.DownloadComplete -> {
@@ -597,6 +617,7 @@ class MainActivity : FragmentActivity() {
                 actionButton.setOnClickListener {
                     viewModel.updater.installApk(state.apkFile)
                 }
+                actionButton.requestFocus()
             }
             is AppUpdater.UpdateState.Error -> {
                 statusText.text = "${getString(R.string.updater_error)}: ${state.message}"
@@ -606,6 +627,7 @@ class MainActivity : FragmentActivity() {
                 actionButton.setOnClickListener {
                     viewModel.checkForUpdates()
                 }
+                actionButton.requestFocus()
             }
             else -> {}
         }

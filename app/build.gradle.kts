@@ -16,8 +16,8 @@ android {
     applicationId = "com.aistudio.silvohorizon.tvapp"
     minSdk = 24
     targetSdk = 36
-    versionCode = 1
-    versionName = "1.0"
+    versionCode = project.findProperty("APP_VERSION_CODE")?.toString()?.toIntOrNull() ?: 2
+    versionName = project.findProperty("APP_VERSION_NAME")?.toString() ?: "1.0.1"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }

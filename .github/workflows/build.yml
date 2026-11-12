@@ -1,4 +1,4 @@
-name: Build Android TV APK
+name: Build and Release Android TV APK
 
 on:
   push:
@@ -8,6 +8,9 @@ on:
   pull_request:
     branches: [ "main", "master" ]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -24,6 +27,21 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      - name: Resolve Version
+        id: version
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            TAG_NAME="${GITHUB_REF#refs/tags/}"
+            VER_NAME="${TAG_NAME#v}"
+          else
+            VER_NAME="1.0.${GITHUB_RUN_NUMBER}"
+            TAG_NAME="v${VER_NAME}"
+          fi
+          VER_CODE=$((10 + GITHUB_RUN_NUMBER))
+          echo "tag_name=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+          echo "ver_name=${VER_NAME}" >> "$GITHUB_OUTPUT"
+          echo "ver_code=${VER_CODE}" >> "$GITHUB_OUTPUT"
+
       - name: Setup debug keystore
         run: |
           if [ -f debug.keystore.base64 ]; then
@@ -36,10 +54,32 @@ jobs:
           ls -la debug.keystore
 
       - name: Build Debug APK
-        run: gradle assembleDebug --stacktrace
+        run: >
+          gradle assembleDebug
+          -PAPP_VERSION_NAME="${{ steps.version.outputs.ver_name }}"
+          -PAPP_VERSION_CODE="${{ steps.version.outputs.ver_code }}"
+          --stacktrace
+
+      - name: Prepare Release APK
+        run: |
+          mkdir -p release-apks
+          cp app/build/outputs/apk/debug/*.apk "release-apks/silvo-horizon-tv-${{ steps.version.outputs.tag_name }}.apk"
+          ls -la release-apks/
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: silvo-horizon-tv-debug
-          path: app/build/outputs/apk/debug/*.apk
+          name: silvo-horizon-tv-${{ steps.version.outputs.tag_name }}
+          path: release-apks/*.apk
+
+      - name: Publish GitHub Release
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag_name }}
+          name: Silvo Horizon TV ${{ steps.version.outputs.tag_name }}
+          body: |
+            Nueva compilación de Silvo Horizon TV (${{ steps.version.outputs.ver_name }}).
+            Esta versión es detectada automáticamente por el actualizador integrado en la app.
+          files: release-apks/*.apk
+          generate_release_notes: true

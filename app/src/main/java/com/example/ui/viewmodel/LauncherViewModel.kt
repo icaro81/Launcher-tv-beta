@@ -35,6 +35,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     init {
         loadData()
+        checkForUpdates()
     }
 
     fun loadData(forceRefresh: Boolean = false) {
