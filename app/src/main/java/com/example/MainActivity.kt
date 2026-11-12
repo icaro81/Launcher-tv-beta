@@ -1,7 +1,10 @@
 package com.example
 
+import android.Manifest
+import android.app.Activity
 import android.app.Dialog
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -9,6 +12,9 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.KeyEvent
@@ -42,7 +48,9 @@ import com.example.ui.view.SilvoHorizonBackgroundView
 import com.example.ui.viewmodel.LauncherViewModel
 import com.example.updater.AppUpdater
 import com.example.util.DefaultLauncherHelper
+import com.example.util.VoiceCommandParser
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 /**
  * Silvo Horizon - Ultra-minimalist, high-performance Android TV Launcher
@@ -61,7 +69,9 @@ class MainActivity : FragmentActivity() {
     private lateinit var searchEditText: EditText
     private lateinit var btnCloseDrawer: ImageButton
 
-    // Top Bar Buttons
+    // Top Bar & Drawer Buttons
+    private lateinit var btnVoiceSearch: ImageButton
+    private lateinit var btnDrawerVoiceSearch: ImageButton
     private lateinit var btnHomeDefault: ImageButton
     private lateinit var btnWifi: ImageButton
     private lateinit var btnBluetooth: ImageButton
@@ -72,12 +82,39 @@ class MainActivity : FragmentActivity() {
     private lateinit var carouselAdapter: CarouselAppAdapter
     private lateinit var gridAdapter: AllAppsGridAdapter
 
-    // Dialog references
+    // Dialog & SpeechRecognizer references
     private var activeOptionsDialog: Dialog? = null
     private var activeUpdaterDialog: Dialog? = null
     private var activeLauncherDialog: Dialog? = null
+    private var activeVoiceDialog: Dialog? = null
+    private var speechRecognizer: SpeechRecognizer? = null
 
     private var lastTitle: String? = null
+
+    private val recordAudioPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                startVoiceSearchListening()
+            } else {
+                Toast.makeText(
+                    this,
+                    getString(R.string.voice_permission_denied),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+
+    private val voiceIntentLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val spokenText = result.data
+                    ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    ?.firstOrNull()
+                if (!spokenText.isNullOrBlank()) {
+                    handleVoiceSearchResult(spokenText)
+                }
+            }
+        }
 
     private val defaultLauncherResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -113,6 +150,7 @@ class MainActivity : FragmentActivity() {
             activeOptionsDialog?.dismiss()
             activeUpdaterDialog?.dismiss()
             activeLauncherDialog?.dismiss()
+            stopVoiceSearchDialog()
             if (viewModel.isDrawerOpen.value) {
                 viewModel.closeDrawer()
             }
@@ -147,6 +185,8 @@ class MainActivity : FragmentActivity() {
         searchEditText = findViewById(R.id.searchEditText)
         btnCloseDrawer = findViewById(R.id.btnCloseDrawer)
 
+        btnVoiceSearch = findViewById(R.id.btnVoiceSearch)
+        btnDrawerVoiceSearch = findViewById(R.id.btnDrawerVoiceSearch)
         btnHomeDefault = findViewById(R.id.btnHomeDefault)
         btnWifi = findViewById(R.id.btnWifi)
         btnBluetooth = findViewById(R.id.btnBluetooth)
@@ -228,6 +268,10 @@ class MainActivity : FragmentActivity() {
             viewModel.closeDrawer()
         }
 
+        btnDrawerVoiceSearch.setOnClickListener {
+            initiateVoiceSearch()
+        }
+
         searchEditText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
@@ -238,6 +282,10 @@ class MainActivity : FragmentActivity() {
     }
 
     private fun setupTopBar() {
+        btnVoiceSearch.setOnClickListener {
+            initiateVoiceSearch()
+        }
+
         btnHomeDefault.setOnClickListener {
             showDefaultLauncherDialog()
         }
@@ -633,6 +681,203 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    // =================================================================
+    // VOICE SEARCH (Android TV Microphone Permission + SpeechRecognizer)
+    // =================================================================
+
+    private fun initiateVoiceSearch() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            startVoiceSearchListening()
+        } else {
+            recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
+    private fun startVoiceSearchListening() {
+        if (SpeechRecognizer.isRecognitionAvailable(this)) {
+            showVoiceSearchDialog()
+        } else {
+            launchRecognizerIntentFallback()
+        }
+    }
+
+    private fun launchRecognizerIntentFallback() {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(
+                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+            )
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+            putExtra(RecognizerIntent.EXTRA_PROMPT, getString(R.string.voice_speak_now))
+        }
+        try {
+            voiceIntentLauncher.launch(intent)
+        } catch (_: Exception) {
+            Toast.makeText(this, getString(R.string.voice_not_available), Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun showVoiceSearchDialog() {
+        stopVoiceSearchDialog()
+
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_voice_search)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+        val pulseRing: View = dialog.findViewById(R.id.voicePulseRing)
+        val micIcon: ImageView = dialog.findViewById(R.id.voiceMicIcon)
+        val statusText: TextView = dialog.findViewById(R.id.voiceStatusText)
+        val transcriptText: TextView = dialog.findViewById(R.id.voiceTranscriptText)
+        val btnCancel: Button = dialog.findViewById(R.id.btnCancelVoice)
+
+        micIcon.imageTintList =
+            ColorStateList.valueOf(ContextCompat.getColor(this, R.color.silvo_cyan_neon))
+
+        val recognizer = SpeechRecognizer.createSpeechRecognizer(this)
+        speechRecognizer = recognizer
+
+        recognizer.setRecognitionListener(object : RecognitionListener {
+            override fun onReadyForSpeech(params: Bundle?) {
+                statusText.text = getString(R.string.voice_listening)
+                transcriptText.text = getString(R.string.voice_speak_now)
+            }
+
+            override fun onBeginningOfSpeech() {
+                pulseRing.animate().scaleX(1.25f).scaleY(1.25f).alpha(0.85f).setDuration(150).start()
+            }
+
+            override fun onRmsChanged(rmsdB: Float) {
+                val scale = (1.0f + (rmsdB.coerceIn(0f, 12f) / 22f))
+                pulseRing.scaleX = scale
+                pulseRing.scaleY = scale
+            }
+
+            override fun onBufferReceived(buffer: ByteArray?) {}
+
+            override fun onEndOfSpeech() {
+                pulseRing.animate().scaleX(1.0f).scaleY(1.0f).alpha(0.4f).setDuration(180).start()
+            }
+
+            override fun onError(error: Int) {
+                val msg = when (error) {
+                    SpeechRecognizer.ERROR_NO_MATCH,
+                    SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No se escuchó ninguna aplicación"
+                    SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> getString(R.string.voice_permission_denied)
+                    SpeechRecognizer.ERROR_NETWORK,
+                    SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "Error de red en reconocimiento de voz"
+                    else -> getString(R.string.voice_not_available)
+                }
+                Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show()
+                stopVoiceSearchDialog()
+            }
+
+            override fun onResults(results: Bundle?) {
+                val spoken = results
+                    ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    ?.firstOrNull()
+                stopVoiceSearchDialog()
+                if (!spoken.isNullOrBlank()) {
+                    handleVoiceSearchResult(spoken)
+                }
+            }
+
+            override fun onPartialResults(partialResults: Bundle?) {
+                val partial = partialResults
+                    ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    ?.firstOrNull()
+                if (!partial.isNullOrBlank()) {
+                    transcriptText.text = "“$partial”"
+                }
+            }
+
+            override fun onEvent(eventType: Int, params: Bundle?) {}
+        })
+
+        btnCancel.setOnClickListener {
+            stopVoiceSearchDialog()
+        }
+
+        dialog.setOnDismissListener {
+            destroySpeechRecognizer()
+        }
+
+        activeVoiceDialog = dialog
+        dialog.show()
+        btnCancel.requestFocus()
+
+        val recognizerIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(
+                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+            )
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
+            putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, packageName)
+        }
+
+        try {
+            recognizer.startListening(recognizerIntent)
+        } catch (_: Exception) {
+            stopVoiceSearchDialog()
+            launchRecognizerIntentFallback()
+        }
+    }
+
+    private fun handleVoiceSearchResult(spokenText: String) {
+        val parsed = VoiceCommandParser.parse(spokenText)
+        val matches = VoiceCommandParser.findBestMatches(viewModel.allApps.value, parsed.searchQuery)
+
+        if (parsed.isExplicitLaunch && matches.size == 1) {
+            val appToLaunch = matches.first()
+            Toast.makeText(
+                this,
+                getString(R.string.voice_opening_app, appToLaunch.label),
+                Toast.LENGTH_SHORT
+            ).show()
+            handleAppClick(appToLaunch)
+            return
+        }
+
+        // Open All Apps drawer filtered to the spoken voice query
+        viewModel.openDrawer()
+        searchEditText.post {
+            searchEditText.setText(parsed.searchQuery)
+            searchEditText.setSelection(parsed.searchQuery.length)
+            gridAdapter.filter(parsed.searchQuery)
+            if (matches.isEmpty() && parsed.searchQuery.isNotBlank()) {
+                Toast.makeText(
+                    this,
+                    getString(R.string.voice_no_match, parsed.searchQuery),
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else {
+                allAppsGridView.post {
+                    allAppsGridView.requestFocus()
+                }
+            }
+        }
+    }
+
+    private fun stopVoiceSearchDialog() {
+        activeVoiceDialog?.dismiss()
+        activeVoiceDialog = null
+        destroySpeechRecognizer()
+    }
+
+    private fun destroySpeechRecognizer() {
+        try {
+            speechRecognizer?.cancel()
+            speechRecognizer?.destroy()
+        } catch (_: Exception) {
+            // Ignore cleanup errors
+        }
+        speechRecognizer = null
+    }
+
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         if (keyCode == KeyEvent.KEYCODE_MENU) {
             val focusedApp = viewModel.focusedApp.value
@@ -640,6 +885,9 @@ class MainActivity : FragmentActivity() {
                 showAppOptionsDialog(focusedApp)
                 return true
             }
+        } else if (keyCode == KeyEvent.KEYCODE_SEARCH || keyCode == KeyEvent.KEYCODE_VOICE_ASSIST) {
+            initiateVoiceSearch()
+            return true
         }
         return super.onKeyDown(keyCode, event)
     }
@@ -658,5 +906,6 @@ class MainActivity : FragmentActivity() {
         activeOptionsDialog?.dismiss()
         activeUpdaterDialog?.dismiss()
         activeLauncherDialog?.dismiss()
+        stopVoiceSearchDialog()
     }
 }

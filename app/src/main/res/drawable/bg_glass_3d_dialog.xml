@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Outer soft shadow / cyan bevel -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="26dp" />
+            <gradient
+                android:angle="135"
+                android:startColor="#6600E5FF"
+                android:centerColor="#22FFFFFF"
+                android:endColor="#330A1520" />
+        </shape>
+    </item>
+    <!-- Inner translucent 3D frosted glass surface -->
+    <item
+        android:left="1.5dp"
+        android:top="1.5dp"
+        android:right="1.5dp"
+        android:bottom="1.5dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="24.5dp" />
+            <gradient
+                android:angle="135"
+                android:startColor="#EB172432"
+                android:centerColor="#E60D151E"
+                android:endColor="#F0080C12" />
+        </shape>
+    </item>
+</layer-list>

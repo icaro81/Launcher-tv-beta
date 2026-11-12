@@ -1,7 +1,9 @@
 package com.example
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import androidx.test.core.app.ApplicationProvider
@@ -11,6 +13,7 @@ import com.example.ui.adapter.CarouselAppAdapter
 import com.example.ui.view.SilvoHorizonBackgroundView
 import com.example.updater.AppUpdater
 import com.example.util.DefaultLauncherHelper
+import com.example.util.VoiceCommandParser
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -111,5 +114,35 @@ class ExampleRobolectricTest {
             resolved.any { it.activityInfo.name.endsWith("MainActivity") }
         )
         assertNotNull(DefaultLauncherHelper.buildSetDefaultLauncherIntent(context))
+    }
+
+    @Test
+    fun `voice command parser extracts app query and launch intent`() {
+        val openYoutube = VoiceCommandParser.parse("Abrir YouTube")
+        assertTrue(openYoutube.isExplicitLaunch)
+        assertEquals("YouTube", openYoutube.searchQuery)
+
+        val searchNetflix = VoiceCommandParser.parse("buscar Netflix")
+        assertTrue(!searchNetflix.isExplicitLaunch)
+        assertEquals("Netflix", searchNetflix.searchQuery)
+
+        val apps = listOf(
+            AppItem("com.google.android.youtube.tv", "Main", "YouTube", null),
+            AppItem("com.netflix.ninja", "Main", "Netflix", null)
+        )
+        val matches = VoiceCommandParser.findBestMatches(apps, openYoutube.searchQuery)
+        assertEquals(1, matches.size)
+        assertEquals("YouTube", matches.first().label)
+    }
+
+    @Test
+    fun `manifest declares RECORD_AUDIO permission for voice search`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val pkgInfo = context.packageManager.getPackageInfo(
+            context.packageName,
+            PackageManager.GET_PERMISSIONS
+        )
+        val requested = pkgInfo.requestedPermissions?.toList().orEmpty()
+        assertTrue(requested.contains(Manifest.permission.RECORD_AUDIO))
     }
 }

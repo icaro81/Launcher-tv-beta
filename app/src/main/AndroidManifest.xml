@@ -7,12 +7,13 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Required on Android 11+ to discover all installed TV & sideloaded apps and home launchers -->
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
 
-    <!-- Explicit package visibility queries for Android 11+ Home & TV app discovery -->
+    <!-- Explicit package visibility queries for Android 11+ Home, TV apps & Speech Recognition -->
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />
@@ -26,6 +27,12 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
+        </intent>
     </queries>
 
     <!-- TV & Hardware feature declarations (compatible with Xiaomi Mi Box S, Android TV, and boxes) -->
@@ -37,6 +44,9 @@
         android:required="false" />
     <uses-feature
         android:name="android.hardware.wifi"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.microphone"
         android:required="false" />
 
     <application

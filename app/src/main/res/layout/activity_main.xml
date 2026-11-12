@@ -79,12 +79,25 @@
                     tools:text="18°C" />
             </LinearLayout>
 
-            <!-- Right: Status / Action Icons (Home Default, WiFi, Bluetooth, Updater, Settings) -->
+            <!-- Right: Status / Action Icons (Voice Search, Home Default, WiFi, Bluetooth, Updater, Settings) -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical">
+
+                <!-- Voice Search Button -->
+                <ImageButton
+                    android:id="@+id/btnVoiceSearch"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/selector_icon_button"
+                    android:src="@drawable/ic_mic_tv"
+                    android:padding="10dp"
+                    android:scaleType="fitCenter"
+                    android:focusable="true"
+                    android:contentDescription="@string/action_voice_search" />
 
                 <!-- Default Home Launcher Button -->
                 <ImageButton
@@ -264,7 +277,7 @@
             <!-- Search box -->
             <EditText
                 android:id="@+id/searchEditText"
-                android:layout_width="260dp"
+                android:layout_width="240dp"
                 android:layout_height="44dp"
                 android:background="@drawable/selector_app_card"
                 android:drawableStart="@drawable/ic_search_tv"
@@ -277,8 +290,21 @@
                 android:paddingEnd="16dp"
                 android:singleLine="true"
                 android:imeOptions="actionDone"
-                android:layout_marginEnd="16dp"
+                android:layout_marginEnd="10dp"
                 android:focusable="true" />
+
+            <!-- Drawer Voice Search Button -->
+            <ImageButton
+                android:id="@+id/btnDrawerVoiceSearch"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_marginEnd="12dp"
+                android:background="@drawable/selector_icon_button"
+                android:src="@drawable/ic_mic_tv"
+                android:padding="10dp"
+                android:scaleType="fitCenter"
+                android:focusable="true"
+                android:contentDescription="@string/action_voice_search" />
 
             <!-- Close Drawer Button -->
             <ImageButton

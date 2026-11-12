@@ -29,4 +29,11 @@
     <string name="default_launcher_hint">Para que el botón Home del control remoto (ej. Xiaomi Mi Box S) permanezca en Silvo Horizon, establécelo como app de Inicio predeterminada. Si el sistema no muestra el selector, abre Ajustes de Inicio o borra los valores predeterminados del launcher original.</string>
     <string name="action_set_default_launcher">Establecer como Inicio por defecto</string>
     <string name="action_open_home_settings">Abrir Ajustes de Inicio / Apps por defecto</string>
+    <string name="action_voice_search">Búsqueda por Voz</string>
+    <string name="voice_listening">Escuchando…</string>
+    <string name="voice_speak_now">Di el nombre de la aplicación o “Abrir…”</string>
+    <string name="voice_permission_denied">Se requiere permiso de micrófono para buscar por voz</string>
+    <string name="voice_not_available">Reconocimiento de voz no disponible en este dispositivo</string>
+    <string name="voice_no_match">No se encontraron aplicaciones para “%1$s”</string>
+    <string name="voice_opening_app">Abriendo %1$s…</string>
 </resources>

@@ -21,8 +21,9 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 
 /**
- * Subtle dynamic cinematic background view for Silvo Horizon.
- * Smoothly transitions gradient and horizon glow colors to match the centered app.
+ * Subtle dynamic 3D Glass ("Cristal 3D") cinematic background view for Silvo Horizon.
+ * Combines multi-layered perspective glass planes, beveled specular edges, and a curved
+ * refractive glass horizon stage that smoothly adapts to the centered app's color.
  */
 class SilvoHorizonBackgroundView @JvmOverloads constructor(
     context: Context,
@@ -30,7 +31,7 @@ class SilvoHorizonBackgroundView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    private val baseColor = Color.parseColor("#070A0E")
+    private val baseColor = Color.parseColor("#06090D")
     private val defaultAccent = Color.parseColor("#00E5FF")
 
     private var currentAccentColor: Int = defaultAccent
@@ -38,19 +39,52 @@ class SilvoHorizonBackgroundView @JvmOverloads constructor(
     private var colorAnimator: ValueAnimator? = null
     private val argbEvaluator = ArgbEvaluator()
 
+    // Paints
     private val basePaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val radialGlowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    // 3D Glass Facet Planes
+    private val leftGlassFillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val leftGlassBevelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 2.2f
+    }
+    private val rightGlassFillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val rightGlassBevelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 2.2f
+    }
+    private val centerGlassPanelPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val centerGlassBevelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 2f
+    }
+    private val specularSheenPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    // 3D Curved Glass Horizon Stage
     private val horizonFillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val horizonDepthPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 10f
+    }
     private val horizonStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = 3f
     }
+    private val horizonInnerRimPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 1.6f
+    }
 
+    // Pre-allocated Paths
+    private val leftGlassPath = Path()
+    private val rightGlassPath = Path()
+    private val centerGlassPath = Path()
+    private val specularSheenPath = Path()
     private val horizonFillPath = Path()
     private val horizonLinePath = Path()
-
-    private var lastWidth = 0
-    private var lastHeight = 0
+    private val horizonDepthPath = Path()
+    private val horizonInnerRimPath = Path()
 
     init {
         setLayerType(LAYER_TYPE_HARDWARE, null)
@@ -79,8 +113,6 @@ class SilvoHorizonBackgroundView @JvmOverloads constructor(
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         if (w > 0 && h > 0) {
-            lastWidth = w
-            lastHeight = h
             rebuildPaths(w, h)
             rebuildShaders(w, h)
         }
@@ -89,6 +121,41 @@ class SilvoHorizonBackgroundView @JvmOverloads constructor(
     private fun rebuildPaths(w: Int, h: Int) {
         val wf = w.toFloat()
         val hf = h.toFloat()
+
+        // 1. Left angled 3D glass prism pane
+        leftGlassPath.reset()
+        leftGlassPath.moveTo(-wf * 0.04f, hf * 0.10f)
+        leftGlassPath.lineTo(wf * 0.34f, hf * 0.04f)
+        leftGlassPath.lineTo(wf * 0.24f, hf * 0.78f)
+        leftGlassPath.lineTo(-wf * 0.06f, hf * 0.68f)
+        leftGlassPath.close()
+
+        // 2. Right angled 3D glass prism pane
+        rightGlassPath.reset()
+        rightGlassPath.moveTo(wf * 0.66f, hf * 0.06f)
+        rightGlassPath.lineTo(wf * 1.04f, hf * 0.14f)
+        rightGlassPath.lineTo(wf * 1.06f, hf * 0.70f)
+        rightGlassPath.lineTo(wf * 0.75f, hf * 0.78f)
+        rightGlassPath.close()
+
+        // 3. Center floating 3D frosted glass card behind carousel
+        val cLeft = wf * 0.14f
+        val cRight = wf * 0.86f
+        val cTop = hf * 0.24f
+        val cBottom = hf * 0.72f
+        val corner = minOf(wf, hf) * 0.045f
+        centerGlassPath.reset()
+        centerGlassPath.addRoundRect(cLeft, cTop, cRight, cBottom, corner, corner, Path.Direction.CW)
+
+        // 4. Diagonal glossy light reflection sweep across the glass surface
+        specularSheenPath.reset()
+        specularSheenPath.moveTo(wf * 0.18f, 0f)
+        specularSheenPath.lineTo(wf * 0.42f, 0f)
+        specularSheenPath.lineTo(wf * 0.14f, hf)
+        specularSheenPath.lineTo(-wf * 0.05f, hf)
+        specularSheenPath.close()
+
+        // 5. 3D Curved Glass Horizon Stage
         val horizonControlY = hf * 0.60f
 
         horizonFillPath.reset()
@@ -98,7 +165,16 @@ class SilvoHorizonBackgroundView @JvmOverloads constructor(
 
         horizonLinePath.reset()
         horizonLinePath.moveTo(-wf * 0.05f, hf)
-        horizonLinePath.quadTo(wf * 0.5f, horizonControlY + 8f, wf * 1.05f, hf)
+        horizonLinePath.quadTo(wf * 0.5f, horizonControlY + 6f, wf * 1.05f, hf)
+
+        // Glass thickness & inner bevel reflection beneath the main curve
+        horizonDepthPath.reset()
+        horizonDepthPath.moveTo(-wf * 0.05f, hf + 6f)
+        horizonDepthPath.quadTo(wf * 0.5f, horizonControlY + 14f, wf * 1.05f, hf + 6f)
+
+        horizonInnerRimPath.reset()
+        horizonInnerRimPath.moveTo(wf * 0.04f, hf)
+        horizonInnerRimPath.quadTo(wf * 0.5f, horizonControlY + 24f, wf * 0.96f, hf)
     }
 
     private fun rebuildShaders(w: Int, h: Int) {
@@ -106,49 +182,154 @@ class SilvoHorizonBackgroundView @JvmOverloads constructor(
         val wf = w.toFloat()
         val hf = h.toFloat()
 
-        // Subtle dark atmospheric vertical gradient tinted gently with the focused app's accent
-        val topTint = ColorUtils.blendARGB(baseColor, currentAccentColor, 0.12f)
-        val midTint = ColorUtils.blendARGB(Color.parseColor("#0B1017"), currentAccentColor, 0.18f)
-        val bottomTint = ColorUtils.blendARGB(Color.parseColor("#06080C"), currentAccentColor, 0.06f)
+        // Deep atmospheric base gradient
+        val topTint = ColorUtils.blendARGB(baseColor, currentAccentColor, 0.13f)
+        val midTint = ColorUtils.blendARGB(Color.parseColor("#0B1119"), currentAccentColor, 0.19f)
+        val bottomTint = ColorUtils.blendARGB(Color.parseColor("#05070B"), currentAccentColor, 0.07f)
 
         basePaint.shader = LinearGradient(
             0f, 0f, 0f, hf,
             intArrayOf(topTint, midTint, bottomTint),
-            floatArrayOf(0f, 0.55f, 1f),
+            floatArrayOf(0f, 0.52f, 1f),
             Shader.TileMode.CLAMP
         )
 
-        // Soft centered radial glow directly behind the focused carousel item
-        val glowCenter = ColorUtils.setAlphaComponent(currentAccentColor, 58)
-        val glowMid = ColorUtils.setAlphaComponent(currentAccentColor, 20)
-        val glowEdge = Color.TRANSPARENT
-
+        // Centered refractive radial spotlight behind the carousel
+        val glowCenter = ColorUtils.setAlphaComponent(currentAccentColor, 72)
+        val glowMid = ColorUtils.setAlphaComponent(currentAccentColor, 26)
         radialGlowPaint.shader = RadialGradient(
             wf * 0.5f,
-            hf * 0.48f,
-            wf * 0.45f,
-            intArrayOf(glowCenter, glowMid, glowEdge),
-            floatArrayOf(0f, 0.55f, 1f),
+            hf * 0.47f,
+            wf * 0.46f,
+            intArrayOf(glowCenter, glowMid, Color.TRANSPARENT),
+            floatArrayOf(0f, 0.52f, 1f),
             Shader.TileMode.CLAMP
         )
 
-        // Curved Aeon Nox Silvo horizon glow
-        val horizonTop = ColorUtils.setAlphaComponent(currentAccentColor, 46)
-        val horizonBottom = ColorUtils.setAlphaComponent(baseColor, 18)
+        // Left & right 3D glass prism planes
+        val glassBright = ColorUtils.setAlphaComponent(
+            ColorUtils.blendARGB(Color.WHITE, currentAccentColor, 0.45f), 26
+        )
+        val glassMid = ColorUtils.setAlphaComponent(currentAccentColor, 14)
+        val glassFade = ColorUtils.setAlphaComponent(baseColor, 4)
+
+        leftGlassFillPaint.shader = LinearGradient(
+            0f, 0f, wf * 0.34f, hf * 0.78f,
+            intArrayOf(glassBright, glassMid, glassFade),
+            floatArrayOf(0f, 0.5f, 1f),
+            Shader.TileMode.CLAMP
+        )
+        leftGlassBevelPaint.shader = LinearGradient(
+            0f, 0f, wf * 0.34f, hf * 0.78f,
+            intArrayOf(
+                ColorUtils.setAlphaComponent(Color.WHITE, 64),
+                ColorUtils.setAlphaComponent(currentAccentColor, 44),
+                Color.TRANSPARENT
+            ),
+            floatArrayOf(0f, 0.45f, 1f),
+            Shader.TileMode.CLAMP
+        )
+
+        rightGlassFillPaint.shader = LinearGradient(
+            wf, 0f, wf * 0.66f, hf * 0.78f,
+            intArrayOf(glassBright, glassMid, glassFade),
+            floatArrayOf(0f, 0.5f, 1f),
+            Shader.TileMode.CLAMP
+        )
+        rightGlassBevelPaint.shader = LinearGradient(
+            wf * 0.66f, 0f, wf, hf * 0.78f,
+            intArrayOf(
+                ColorUtils.setAlphaComponent(currentAccentColor, 44),
+                ColorUtils.setAlphaComponent(Color.WHITE, 68),
+                Color.TRANSPARENT
+            ),
+            floatArrayOf(0f, 0.5f, 1f),
+            Shader.TileMode.CLAMP
+        )
+
+        // Center floating 3D frosted glass card
+        centerGlassPanelPaint.shader = LinearGradient(
+            wf * 0.14f, hf * 0.24f, wf * 0.86f, hf * 0.72f,
+            intArrayOf(
+                ColorUtils.setAlphaComponent(Color.WHITE, 22),
+                ColorUtils.setAlphaComponent(currentAccentColor, 18),
+                ColorUtils.setAlphaComponent(Color.BLACK, 28)
+            ),
+            floatArrayOf(0f, 0.5f, 1f),
+            Shader.TileMode.CLAMP
+        )
+        centerGlassBevelPaint.shader = LinearGradient(
+            wf * 0.14f, hf * 0.24f, wf * 0.86f, hf * 0.72f,
+            intArrayOf(
+                ColorUtils.setAlphaComponent(Color.WHITE, 82),
+                ColorUtils.setAlphaComponent(currentAccentColor, 58),
+                ColorUtils.setAlphaComponent(Color.BLACK, 45)
+            ),
+            floatArrayOf(0f, 0.48f, 1f),
+            Shader.TileMode.CLAMP
+        )
+
+        // Diagonal glossy light sheen across the glass scene
+        specularSheenPaint.shader = LinearGradient(
+            0f, 0f, wf * 0.42f, hf,
+            intArrayOf(
+                ColorUtils.setAlphaComponent(Color.WHITE, 22),
+                ColorUtils.setAlphaComponent(Color.WHITE, 7),
+                Color.TRANSPARENT
+            ),
+            floatArrayOf(0f, 0.45f, 1f),
+            Shader.TileMode.CLAMP
+        )
+
+        // Curved 3D Glass Horizon Stage
+        val horizonTop = ColorUtils.setAlphaComponent(
+            ColorUtils.blendARGB(currentAccentColor, Color.WHITE, 0.22f), 62
+        )
+        val horizonMid = ColorUtils.setAlphaComponent(currentAccentColor, 24)
+        val horizonBottom = ColorUtils.setAlphaComponent(baseColor, 20)
         horizonFillPaint.shader = LinearGradient(
             0f, hf * 0.60f, 0f, hf,
-            horizonTop,
-            horizonBottom,
+            intArrayOf(horizonTop, horizonMid, horizonBottom),
+            floatArrayOf(0f, 0.45f, 1f),
             Shader.TileMode.CLAMP
         )
 
-        // Subtle horizon rim highlight fading toward left and right screen edges
-        val rimTransparent = Color.TRANSPARENT
-        val rimMid = ColorUtils.setAlphaComponent(currentAccentColor, 110)
-        val rimCenter = ColorUtils.setAlphaComponent(currentAccentColor, 200)
+        // 3D Glass slab thickness shadow beneath horizon curve
+        horizonDepthPaint.shader = LinearGradient(
+            0f, hf * 0.75f, wf, hf * 0.75f,
+            intArrayOf(
+                Color.TRANSPARENT,
+                ColorUtils.setAlphaComponent(currentAccentColor, 34),
+                ColorUtils.setAlphaComponent(currentAccentColor, 65),
+                ColorUtils.setAlphaComponent(currentAccentColor, 34),
+                Color.TRANSPARENT
+            ),
+            floatArrayOf(0f, 0.25f, 0.5f, 0.75f, 1f),
+            Shader.TileMode.CLAMP
+        )
+
+        // Crisp specular rim on the 3D curved glass edge
+        val rimMid = ColorUtils.setAlphaComponent(currentAccentColor, 130)
+        val rimCenter = ColorUtils.setAlphaComponent(
+            ColorUtils.blendARGB(currentAccentColor, Color.WHITE, 0.45f), 225
+        )
         horizonStrokePaint.shader = LinearGradient(
             0f, hf * 0.75f, wf, hf * 0.75f,
-            intArrayOf(rimTransparent, rimMid, rimCenter, rimMid, rimTransparent),
+            intArrayOf(Color.TRANSPARENT, rimMid, rimCenter, rimMid, Color.TRANSPARENT),
+            floatArrayOf(0f, 0.24f, 0.5f, 0.76f, 1f),
+            Shader.TileMode.CLAMP
+        )
+
+        // Inner refractive glass reflection arc
+        horizonInnerRimPaint.shader = LinearGradient(
+            0f, hf * 0.8f, wf, hf * 0.8f,
+            intArrayOf(
+                Color.TRANSPARENT,
+                ColorUtils.setAlphaComponent(Color.WHITE, 42),
+                ColorUtils.setAlphaComponent(Color.WHITE, 82),
+                ColorUtils.setAlphaComponent(Color.WHITE, 42),
+                Color.TRANSPARENT
+            ),
             floatArrayOf(0f, 0.25f, 0.5f, 0.75f, 1f),
             Shader.TileMode.CLAMP
         )
@@ -160,9 +341,27 @@ class SilvoHorizonBackgroundView @JvmOverloads constructor(
         val hf = height.toFloat()
         if (wf <= 0f || hf <= 0f) return
 
+        // Base atmospheric gradient + adaptive radial refraction
         canvas.drawRect(0f, 0f, wf, hf, basePaint)
-        canvas.drawCircle(wf * 0.5f, hf * 0.48f, wf * 0.45f, radialGlowPaint)
+        canvas.drawCircle(wf * 0.5f, hf * 0.47f, wf * 0.46f, radialGlowPaint)
+
+        // 3D Glass facet planes & central frosted glass pane
+        canvas.drawPath(leftGlassPath, leftGlassFillPaint)
+        canvas.drawPath(leftGlassPath, leftGlassBevelPaint)
+
+        canvas.drawPath(rightGlassPath, rightGlassFillPaint)
+        canvas.drawPath(rightGlassPath, rightGlassBevelPaint)
+
+        canvas.drawPath(centerGlassPath, centerGlassPanelPaint)
+        canvas.drawPath(centerGlassPath, centerGlassBevelPaint)
+
+        // Specular diagonal reflection sweep
+        canvas.drawPath(specularSheenPath, specularSheenPaint)
+
+        // 3D Curved Glass Horizon Stage
         canvas.drawPath(horizonFillPath, horizonFillPaint)
+        canvas.drawPath(horizonDepthPath, horizonDepthPaint)
+        canvas.drawPath(horizonInnerRimPath, horizonInnerRimPaint)
         canvas.drawPath(horizonLinePath, horizonStrokePaint)
     }
 
@@ -237,7 +436,6 @@ class SilvoHorizonBackgroundView @JvmOverloads constructor(
                     val sat = hsv[1]
                     val value = hsv[2]
 
-                    // Skip near-black, near-white, and flat grey pixels
                     if (sat < 0.20f || value < 0.16f) continue
                     if (value > 0.96f && sat < 0.25f) continue
 
@@ -259,7 +457,6 @@ class SilvoHorizonBackgroundView @JvmOverloads constructor(
                         (sumG / totalWeight).toInt().coerceIn(0, 255),
                         (sumB / totalWeight).toInt().coerceIn(0, 255)
                     )
-                    // Boost vibrancy slightly while keeping color faithful
                     ColorUtils.blendARGB(avgColor, bestColor, 0.35f)
                 } else {
                     null
