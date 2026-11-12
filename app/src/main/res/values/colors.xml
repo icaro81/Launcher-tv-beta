@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Silvo Horizon Dark Cinematic Palette -->
+    <color name="silvo_bg">#070A0E</color>
+    <color name="silvo_bg_secondary">#0D131A</color>
+    <color name="silvo_horizon_glow">#0C2636</color>
+    <color name="silvo_cyan_neon">#00E5FF</color>
+    <color name="silvo_cyan_glow">#4000E5FF</color>
+    <color name="silvo_cyan_faded">#8000E5FF</color>
+    <color name="silvo_card_bg_normal">#1A222B</color>
+    <color name="silvo_card_stroke_normal">#2A3644</color>
+    <color name="silvo_card_bg_focused">#163242</color>
+    <color name="silvo_text_primary">#FFFFFF</color>
+    <color name="silvo_text_secondary">#8C9BA5</color>
+    <color name="silvo_text_tertiary">#546571</color>
+    <color name="silvo_dialog_bg">#0F161F</color>
+    <color name="silvo_accent_red">#FF5252</color>
+    <color name="silvo_accent_green">#00E676</color>
+</resources>

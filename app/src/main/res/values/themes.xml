@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.SilvoHorizon" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/silvo_bg</item>
+        <item name="android:colorBackground">@color/silvo_bg</item>
+        <item name="android:textColorPrimary">@color/silvo_text_primary</item>
+        <item name="android:textColorSecondary">@color/silvo_text_secondary</item>
+        <item name="colorPrimary">@color/silvo_cyan_neon</item>
+        <item name="colorAccent">@color/silvo_cyan_neon</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowOverscan">true</item>
+    </style>
+
+    <style name="Theme.MyApplication" parent="Theme.SilvoHorizon" />
+</resources>

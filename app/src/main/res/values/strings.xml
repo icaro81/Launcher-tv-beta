@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">Silvo Horizon</string>
+    <string name="apps_drawer_title">Todas las Aplicaciones</string>
+    <string name="apps_drawer_subtitle">Aplicaciones instaladas en el sistema</string>
+    <string name="action_open">Abrir</string>
+    <string name="action_add_favorite">Añadir a Favoritos</string>
+    <string name="action_remove_favorite">Quitar de Favoritos</string>
+    <string name="action_app_info">Información de la App</string>
+    <string name="action_uninstall">Desinstalar</string>
+    <string name="action_settings">Ajustes del Sistema</string>
+    <string name="action_check_updates">Buscar Actualizaciones</string>
+    <string name="status_connected">Conectado</string>
+    <string name="status_disconnected">Sin conexión</string>
+    <string name="drawer_shortcut_label">Todas las Apps</string>
+    <string name="weather_default">21°C</string>
+    <string name="search_hint">Buscar aplicación…</string>
+    <string name="updater_title">Actualizador de Sistema</string>
+    <string name="updater_checking">Comprobando última versión en GitHub…</string>
+    <string name="updater_up_to_date">La aplicación está actualizada</string>
+    <string name="updater_update_found">Nueva versión disponible: %1$s</string>
+    <string name="updater_downloading">Descargando actualización (%1$d%%)…</string>
+    <string name="updater_installing">Preparando instalación…</string>
+    <string name="updater_error">Error al comprobar actualización</string>
+    <string name="updater_github_repo">repos/icarojose81/silvo-horizon-tv/releases/latest</string>
+</resources>

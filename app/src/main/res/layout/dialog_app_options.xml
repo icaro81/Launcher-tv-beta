@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="420dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_silvo_dialog"
+    android:padding="24dp">
+
+    <!-- Header with Icon and Title -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="20dp">
+
+        <ImageView
+            android:id="@+id/dialogAppIcon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:scaleType="fitCenter"
+            android:contentDescription="@string/app_name"
+            tools:src="@drawable/ic_apps_grid" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="16dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/dialogAppTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/silvo_text_primary"
+                android:textSize="18sp"
+                android:fontFamily="sans-serif-medium"
+                android:ellipsize="end"
+                android:maxLines="1"
+                tools:text="YouTube" />
+
+            <TextView
+                android:id="@+id/dialogAppPackage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/silvo_text_tertiary"
+                android:textSize="12sp"
+                android:fontFamily="sans-serif"
+                android:ellipsize="end"
+                android:maxLines="1"
+                tools:text="com.google.android.youtube.tv" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/silvo_card_stroke_normal"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Action: Open -->
+    <Button
+        android:id="@+id/btnOpenApp"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="@string/action_open"
+        android:textColor="@color/silvo_text_primary"
+        android:background="@drawable/selector_app_card"
+        android:layout_marginBottom="8dp"
+        android:textAllCaps="false"
+        android:textSize="15sp"
+        android:focusable="true" />
+
+    <!-- Action: Toggle Favorite -->
+    <Button
+        android:id="@+id/btnToggleFavorite"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="@string/action_add_favorite"
+        android:textColor="@color/silvo_cyan_neon"
+        android:background="@drawable/selector_app_card"
+        android:layout_marginBottom="8dp"
+        android:textAllCaps="false"
+        android:textSize="15sp"
+        android:focusable="true" />
+
+    <!-- Action: App Info -->
+    <Button
+        android:id="@+id/btnAppInfo"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="@string/action_app_info"
+        android:textColor="@color/silvo_text_primary"
+        android:background="@drawable/selector_app_card"
+        android:layout_marginBottom="8dp"
+        android:textAllCaps="false"
+        android:textSize="15sp"
+        android:focusable="true" />
+
+    <!-- Action: Uninstall -->
+    <Button
+        android:id="@+id/btnUninstall"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="@string/action_uninstall"
+        android:textColor="@color/silvo_accent_red"
+        android:background="@drawable/selector_app_card"
+        android:textAllCaps="false"
+        android:textSize="15sp"
+        android:focusable="true" />
+
+</LinearLayout>

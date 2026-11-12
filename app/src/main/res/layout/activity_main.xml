@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mainRootLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_silvo_horizon"
+    android:clipChildren="false"
+    android:clipToPadding="false">
+
+    <!-- ================================================================= -->
+    <!-- MAIN HORIZON VIEW (Carousel & Top Bar)                            -->
+    <!-- ================================================================= -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/horizonMainContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipChildren="false"
+        android:clipToPadding="false">
+
+        <!-- Top Status Bar -->
+        <LinearLayout
+            android:id="@+id/topBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="48dp"
+            android:paddingEnd="48dp"
+            android:paddingTop="36dp"
+            android:paddingBottom="16dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <!-- Left: Clock & Temperature ("07:50 | 18°C") -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextClock
+                    android:id="@+id/clockView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:format12Hour="hh:mm"
+                    android:format24Hour="HH:mm"
+                    android:textColor="@color/silvo_text_primary"
+                    android:textSize="22sp"
+                    android:fontFamily="sans-serif-medium"
+                    tools:text="07:50" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="|"
+                    android:textColor="@color/silvo_text_tertiary"
+                    android:textSize="20sp" />
+
+                <TextView
+                    android:id="@+id/temperatureView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/weather_default"
+                    android:textColor="@color/silvo_text_secondary"
+                    android:textSize="20sp"
+                    android:fontFamily="sans-serif-light"
+                    tools:text="18°C" />
+            </LinearLayout>
+
+            <!-- Right: Status / Action Icons (WiFi, Bluetooth, Updater, Settings) -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- WiFi Icon Button -->
+                <ImageButton
+                    android:id="@+id/btnWifi"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/selector_icon_button"
+                    android:src="@drawable/ic_wifi_tv"
+                    android:padding="10dp"
+                    android:scaleType="fitCenter"
+                    android:focusable="true"
+                    android:contentDescription="Wi-Fi" />
+
+                <!-- Bluetooth Icon Button -->
+                <ImageButton
+                    android:id="@+id/btnBluetooth"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/selector_icon_button"
+                    android:src="@drawable/ic_bluetooth_tv"
+                    android:padding="10dp"
+                    android:scaleType="fitCenter"
+                    android:focusable="true"
+                    android:contentDescription="Bluetooth" />
+
+                <!-- GitHub Update Button -->
+                <ImageButton
+                    android:id="@+id/btnUpdate"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/selector_icon_button"
+                    android:src="@drawable/ic_update_tv"
+                    android:padding="10dp"
+                    android:scaleType="fitCenter"
+                    android:focusable="true"
+                    android:contentDescription="@string/action_check_updates" />
+
+                <!-- Settings Gear Button -->
+                <ImageButton
+                    android:id="@+id/btnSettings"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/selector_icon_button"
+                    android:src="@drawable/ic_settings_tv"
+                    android:padding="10dp"
+                    android:scaleType="fitCenter"
+                    android:focusable="true"
+                    android:contentDescription="@string/action_settings" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Center Horizontal Carousel Container -->
+        <FrameLayout
+            android:id="@+id/carouselContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:layout_marginTop="30dp"
+            app:layout_constraintTop_toBottomOf="@id/topBar"
+            app:layout_constraintBottom_toTopOf="@id/focusedAppNameTextView"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <!-- HorizontalGridView for ultra-smooth leanback performance -->
+            <androidx.leanback.widget.HorizontalGridView
+                android:id="@+id/favoritesGridView"
+                android:layout_width="match_parent"
+                android:layout_height="180dp"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:focusable="true"
+                android:descendantFocusability="afterDescendants"
+                android:paddingStart="64dp"
+                android:paddingEnd="64dp" />
+        </FrameLayout>
+
+        <!-- Focused App Name Label below Carousel (e.g. "YouTube") -->
+        <TextView
+            android:id="@+id/focusedAppNameTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="70dp"
+            android:textColor="@color/silvo_text_primary"
+            android:textSize="22sp"
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="0.03"
+            android:shadowColor="@color/silvo_cyan_glow"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:shadowRadius="12"
+            tools:text="YouTube"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Subtitle or Hint -->
+        <TextView
+            android:id="@+id/hintTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:text="Presiona OK para abrir • Mantén presionado para opciones"
+            android:textColor="@color/silvo_text_tertiary"
+            android:textSize="12sp"
+            android:fontFamily="sans-serif"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- ================================================================= -->
+    <!-- APP DRAWER OVERLAY ("Todas las Apps")                             -->
+    <!-- ================================================================= -->
+    <LinearLayout
+        android:id="@+id/appDrawerContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="#F0070A0F"
+        android:paddingStart="48dp"
+        android:paddingEnd="48dp"
+        android:paddingTop="32dp"
+        android:paddingBottom="24dp"
+        android:visibility="gone"
+        android:focusable="true"
+        android:clickable="true"
+        tools:visibility="visible">
+
+        <!-- Drawer Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/drawerTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/apps_drawer_title"
+                    android:textColor="@color/silvo_cyan_neon"
+                    android:textSize="24sp"
+                    android:fontFamily="sans-serif-medium" />
+
+                <TextView
+                    android:id="@+id/drawerSubtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/apps_drawer_subtitle"
+                    android:textColor="@color/silvo_text_secondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <!-- Search box -->
+            <EditText
+                android:id="@+id/searchEditText"
+                android:layout_width="260dp"
+                android:layout_height="44dp"
+                android:background="@drawable/selector_app_card"
+                android:drawableStart="@drawable/ic_search_tv"
+                android:drawablePadding="10dp"
+                android:hint="@string/search_hint"
+                android:textColorHint="@color/silvo_text_tertiary"
+                android:textColor="@color/silvo_text_primary"
+                android:textSize="14sp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:singleLine="true"
+                android:imeOptions="actionDone"
+                android:layout_marginEnd="16dp"
+                android:focusable="true" />
+
+            <!-- Close Drawer Button -->
+            <ImageButton
+                android:id="@+id/btnCloseDrawer"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/selector_icon_button"
+                android:src="@drawable/ic_close_tv"
+                android:padding="10dp"
+                android:scaleType="fitCenter"
+                android:focusable="true"
+                android:contentDescription="Cerrar" />
+        </LinearLayout>
+
+        <!-- VerticalGridView for all installed apps -->
+        <androidx.leanback.widget.VerticalGridView
+            android:id="@+id/allAppsGridView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:focusable="true"
+            android:descendantFocusability="afterDescendants" />
+
+    </LinearLayout>
+
+</FrameLayout>

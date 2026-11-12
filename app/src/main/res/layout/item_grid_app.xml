@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="10dp"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="16dp"
+    android:focusable="true"
+    android:clickable="true"
+    android:background="@drawable/selector_app_card">
+
+    <FrameLayout
+        android:layout_width="64dp"
+        android:layout_height="64dp">
+
+        <ImageView
+            android:id="@+id/appIconImageView"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_gravity="center"
+            android:scaleType="fitCenter"
+            android:contentDescription="@string/app_name"
+            tools:src="@drawable/ic_apps_grid" />
+
+        <ImageView
+            android:id="@+id/favoriteIndicator"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="top|end"
+            android:src="@drawable/ic_star_tv"
+            android:visibility="gone"
+            android:contentDescription="@string/action_add_favorite"
+            tools:visibility="visible" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/appNameTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/silvo_text_primary"
+        android:textSize="14sp"
+        android:fontFamily="sans-serif-medium"
+        tools:text="YouTube" />
+
+</LinearLayout>

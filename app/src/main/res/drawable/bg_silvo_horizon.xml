@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="1920dp"
+    android:height="1080dp"
+    android:viewportWidth="1920"
+    android:viewportHeight="1080">
+
+    <!-- Overall deep cinematic dark gradient background -->
+    <path
+        android:pathData="M0,0h1920v1080h-1920z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="960"
+                android:startY="0"
+                android:endX="960"
+                android:endY="1080"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#080C11" />
+                <item android:offset="0.4" android:color="#0B1118" />
+                <item android:offset="0.8" android:color="#0E1620" />
+                <item android:offset="1.0" android:color="#070A0F" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Ambient center spotlight behind carousel -->
+    <path
+        android:pathData="M160,340 a800,400 0 1,0 1600,0 a800,400 0 1,0 -1600,0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="960"
+                android:centerY="540"
+                android:gradientRadius="700"
+                android:type="radial">
+                <item android:offset="0.0" android:color="#1400E5FF" />
+                <item android:offset="0.6" android:color="#0500E5FF" />
+                <item android:offset="1.0" android:color="#00000000" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Aeon Nox Silvo Curved Horizon Soft Glow Layer -->
+    <path
+        android:pathData="M-200,1080 Q960,650 2120,1080 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="960"
+                android:startY="650"
+                android:endX="960"
+                android:endY="1080"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#2400E5FF" />
+                <item android:offset="0.3" android:color="#120E2838" />
+                <item android:offset="1.0" android:color="#05070A0E" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Horizon Thin Neon Cyan Arc line with edge fade -->
+    <path
+        android:pathData="M-100,1080 Q960,660 2020,1080"
+        android:strokeWidth="1.8">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="0"
+                android:startY="800"
+                android:endX="1920"
+                android:endY="800"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#0000E5FF" />
+                <item android:offset="0.3" android:color="#8000E5FF" />
+                <item android:offset="0.5" android:color="#D900E5FF" />
+                <item android:offset="0.7" android:color="#8000E5FF" />
+                <item android:offset="1.0" android:color="#0000E5FF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+</vector>

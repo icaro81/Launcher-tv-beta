@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+    <!-- Dark cinematic background -->
+    <path
+        android:fillColor="#090E14"
+        android:pathData="M0,0h320v180h-320z" />
+
+    <!-- Horizon glow curve -->
+    <path
+        android:fillColor="#0E2331"
+        android:pathData="M0,180 Q160,110 320,180 Z" />
+
+    <!-- Cyan neon horizon highlight -->
+    <path
+        android:strokeColor="#00E5FF"
+        android:strokeWidth="2.5"
+        android:pathData="M0,180 Q160,110 320,180" />
+
+    <!-- Center TV icon silhouette -->
+    <path
+        android:fillColor="#00E5FF"
+        android:pathData="M140,70 h40 c4,0 7,3 7,7 v24 c0,4 -3,7 -7,7 h-40 c-4,0 -7,-3 -7,-7 v-24 c0,-4 3,-7 7,-7 z M144,76 v18 h32 v-18 z M152,110 h16 v4 h-16 z" />
+</vector>

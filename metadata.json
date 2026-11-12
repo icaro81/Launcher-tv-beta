@@ -1,0 +1,6 @@
+{
+  "name": "Silvo Horizon",
+  "description": "Launcher minimalista para Android TV inspirado en Aeon Nox Silvo con carrusel fluido, auto-actualizador y alto rendimiento.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
